@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="VisHarness visual recommendation interaction prototype" />
+    <title>VisHarness · Visual Recommendation Lab</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="VisHarness home">
+          <span class="brand-mark" aria-hidden="true">
+            <i></i><i></i><i></i>
+          </span>
+          <span><strong>VisHarness</strong><small>RECOMMENDATION LAB</small></span>
+        </a>
+
+        <div class="perspective-control">
+          <span class="eyebrow">ANALYSIS PERSPECTIVE</span>
+          <div class="perspective-select">
+            <button class="perspective-button" id="perspectiveButton" aria-expanded="false">
+              <span class="perspective-icon">◎</span>
+              <span><strong id="perspectiveName">Performance overview</strong><small id="perspectiveDesc">Compare revenue movement across regions</small></span>
+              <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4"/></svg>
+            </button>
+            <div class="perspective-menu" id="perspectiveMenu" hidden>
+              <button data-name="Performance overview" data-desc="Compare revenue movement across regions"><span>◎</span><b>Performance overview</b><small>Revenue and regional momentum</small></button>
+              <button data-name="Growth drivers" data-desc="Identify the strongest contributors to change"><span>↗</span><b>Growth drivers</b><small>Contribution and acceleration</small></button>
+              <button data-name="Risk & exceptions" data-desc="Surface anomalies and underperforming segments"><span>◇</span><b>Risk & exceptions</b><small>Deviation and attention points</small></button>
+              <button data-name="Composition shift" data-desc="Understand how the mix changes over time"><span>◒</span><b>Composition shift</b><small>Share and structure changes</small></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-button" aria-label="History">
+            <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8m0-5v5h5M12 7v5l3 2"/></svg>
+          </button>
+          <button class="share-button"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.5M8.2 13.2l7.6 4.5"/></svg> Share session</button>
+          <div class="session-id"><small>SESSION ID</small><strong>VH-26-1023-03</strong></div>
+        </div>
+      </header>
+
+      <main class="main-layout">
+        <section class="workspace">
+          <div class="workspace-heading">
+            <div>
+              <div class="status-row"><span class="live-dot"></span> RECOMMENDATION 03 <span>/</span> 05</div>
+              <h1 id="workspaceTitle">Regional revenue performance</h1>
+              <p id="workspaceSubtitle">A focused view of quarterly growth, with the strongest region highlighted.</p>
+            </div>
+            <div class="canvas-actions">
+              <button class="ghost-button" id="resetButton"><svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg> Reset</button>
+              <button class="primary-button" id="acceptButton">Accept recommendation <span>→</span></button>
+            </div>
+          </div>
+
+          <div class="context-strip">
+            <span><small>DATASET</small> Global Sales FY26</span>
+            <i></i>
+            <span><small>METRIC</small> Net revenue</span>
+            <i></i>
+            <span><small>TIME GRAIN</small> Quarter</span>
+            <i></i>
+            <span><small>COMPARE</small> Regions</span>
+            <button class="context-more">•••</button>
+          </div>
+
+          <div class="canvas-card" id="canvasCard">
+            <div class="canvas-toolbar">
+              <div class="mode-pill"><span id="modeIndicator">FOCUS VIEW</span></div>
+              <div class="chart-tools">
+                <button title="Inspect"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg></button>
+                <button title="Expand"><svg viewBox="0 0 24 24"><path d="M9 4H4v5M15 4h5v5M9 20H4v-5M15 20h5v-5"/></svg></button>
+                <button title="Download"><svg viewBox="0 0 24 24"><path d="M12 3v12m-4-4 4 4 4-4M5 20h14"/></svg></button>
+              </div>
+            </div>
+
+            <div id="mainView" class="main-view"></div>
+
+            <div class="insight-footer" id="insightFooter">
+              <div class="insight-icon">✦</div>
+              <div><small>WHY THIS CHART</small><p id="chartRationale">A slope comparison makes the regional trajectory readable while keeping the Q4 result prominent.</p></div>
+              <button id="whyButton">Explain more</button>
+            </div>
+          </div>
+
+          <div class="bottom-status">
+            <span><i class="check">✓</i> Recommendation updated</span>
+            <span>Last change <b id="lastChange">T3 · focus target</b></span>
+            <span class="saved-status">✓ Saved locally</span>
+          </div>
+        </section>
+
+        <aside class="right-panel">
+          <section class="stage-panel">
+            <div class="panel-heading">
+              <div><span class="eyebrow">REFINEMENT PATH</span><h2>Shape this recommendation</h2></div>
+              <span class="progress-ring">3<span>/4</span></span>
+            </div>
+
+            <div class="stage-tabs" role="tablist" aria-label="Refinement stages">
+              <button class="stage-tab" data-stage="t1"><span>T1</span><b>Analysis</b><small>What to analyze</small></button>
+              <button class="stage-tab" data-stage="t2"><span>T2</span><b>Encoding</b><small>Chart form</small></button>
+              <button class="stage-tab active" data-stage="t3"><span>T3</span><b>Focus</b><small>What to emphasize</small></button>
+              <button class="stage-tab" data-stage="t4"><span>T4</span><b>Style</b><small>How it appears</small></button>
+            </div>
+
+            <div id="stageContent" class="stage-content"></div>
+          </section>
+
+          <section class="chat-panel">
+            <div class="chat-heading">
+              <div><span class="ai-orb">✦</span><span><b>Ask VisHarness</b><small>Context-aware assistant</small></span></div>
+              <button aria-label="More options">•••</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+              <div class="assistant-message"><span>✦</span><p id="assistantPrompt">You can click a mark to change the focus, edit the title, or add an existing value as a reference line.</p></div>
+            </div>
+            <div class="suggestion-chips" id="suggestionChips">
+              <button>Focus on APAC</button><button>Make the takeaway clearer</button>
+            </div>
+            <form class="chat-input" id="chatForm">
+              <button type="button" aria-label="Attach"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+              <textarea id="chatInput" rows="1" placeholder="Describe the change you want..."></textarea>
+              <button class="send-button" type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="m4 12 16-8-6 16-2-6-8-2Zm8 2 8-10"/></svg></button>
+            </form>
+            <p class="chat-hint"><span>⌘</span> + <span>↵</span> to send · Works in every stage</p>
+          </section>
+        </aside>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status"><span>✓</span><p><b>Recommendation accepted</b><small>Your preference has been recorded.</small></p></div>
+    <div class="modal-backdrop" id="modalBackdrop" hidden>
+      <div class="title-modal" role="dialog" aria-modal="true" aria-labelledby="titleModalHeading">
+        <div class="modal-top"><span class="eyebrow">T3 · TAKEAWAY PICKER</span><button id="closeModal">×</button></div>
+        <h2 id="titleModalHeading">Choose the story this chart should tell</h2>
+        <p>Each option uses the same data—the framing is the only thing that changes.</p>
+        <div class="title-options" id="titleOptions"></div>
+      </div>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>
