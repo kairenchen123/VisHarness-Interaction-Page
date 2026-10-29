@@ -5,6 +5,7 @@ const state = {
   reference: null,
   comparisonMode: "comparison",
   chartType: "line",
+  t1Gallery: false,
   t1Selections: { comparison: 0, view: 0 },
   style: {
     color: "professional_cool",
@@ -114,7 +115,27 @@ function chartThumb(kind, color = "#255fdd") {
   return `<svg viewBox="0 0 120 70"><path d="M12 58h100M12 10v48" stroke="#d8dfe2"/><path d="M14 50 39 42 64 31 108 17" stroke="${color}" stroke-width="2.3"/>${[[14,50],[39,42],[64,31],[108,17]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="3" fill="white" stroke="${color}" stroke-width="2"/>`).join("")}</svg>`;
 }
 
+function galleryView(title, subtitle, candidates) {
+  return `<div class="gallery-view"><div class="gallery-heading"><span class="eyebrow">T1 · ANALYSIS A/B</span><h2>${title}</h2><p>${subtitle}</p></div><div class="candidate-grid">${candidates.map((c,i)=>`<button class="candidate-large" data-candidate="${i}"><div class="candidate-label"><span>${i?"B":"A"}</span><small>${c.tag}</small></div>${chartThumb(c.kind,c.color)}<h3>${c.name}</h3><p>${c.desc}</p></button>`).join("")}</div><div class="gallery-note"><span>↗</span> Select one analysis to continue with it as the main view.</div></div>`;
+}
+
 function renderMain() {
+  if (state.stage === "t1" && state.t1Gallery) {
+    const isView = state.comparisonMode === "view";
+    el("mainView").innerHTML = galleryView(
+      isView ? "Choose a new analytical view" : "Choose the comparison that matters",
+      isView ? "The dataset stays fixed; only the analytical lens changes." : "A and B are generated from the same current perspective.",
+      isView ? [
+        {kind:"area", color:"#255fdd", tag:"ANALYSIS A", name:"Growth momentum", desc:"Emphasize the pace and continuity of change."},
+        {kind:"bar", color:"#18a29a", tag:"ANALYSIS B", name:"Regional contribution", desc:"Compare each region’s share of total revenue."}
+      ] : [
+        {kind:"line", color:"#255fdd", tag:"ANALYSIS A", name:"Region vs. region", desc:"Compare all four regions over the same quarters."},
+        {kind:"dot", color:"#ea725e", tag:"ANALYSIS B", name:"Actual vs. target", desc:"Compare each regional result against plan."}
+      ]
+    );
+    bindGalleryInteractions();
+    return;
+  }
   let previewType = state.chartType;
   if (state.stage === "t1") {
     const choice = state.t1Selections[state.comparisonMode];
@@ -122,6 +143,21 @@ function renderMain() {
   }
   el("mainView").innerHTML = mainChart(previewType);
   bindChartInteractions();
+}
+
+function bindGalleryInteractions() {
+  document.querySelectorAll(".candidate-large[data-candidate]").forEach(btn => btn.addEventListener("click", () => {
+    const choice = Number(btn.dataset.candidate);
+    state.t1Selections[state.comparisonMode] = choice;
+    const titles = state.comparisonMode === "view" ? ["Regional growth momentum", "Regional contribution to total"] : ["Regional revenue performance", "Actual revenue against target"];
+    state.title = titles[choice];
+    state.t1Gallery = false;
+    el("workspaceTitle").textContent = state.title;
+    el("lastChange").textContent = `T1 · ${state.comparisonMode === 'view' ? 'analytical view' : 'comparison'} ${choice ? 'B' : 'A'}`;
+    renderStage();
+    renderMain();
+    toast(`Analysis ${choice ? "B" : "A"} selected`, "The selected analysis is now the main view.");
+  }));
 }
 
 function bindChartInteractions() {
@@ -149,17 +185,12 @@ const stages = {
 };
 
 function t1Content() {
-  const selected = state.t1Selections[state.comparisonMode];
   return `<div class="stage-intro"><div><h3>${stages.t1.title}</h3><p>${stages.t1.desc}</p></div><span class="stage-number">01</span></div>
     <div class="analysis-actions">
       <button data-mode="comparison" class="analysis-action ${state.comparisonMode==='comparison'?'active':''}"><span class="action-symbol">⇄</span><span><b>Change comparison</b><small>Choose another counterpart</small></span><span>›</span></button>
       <button data-mode="view" class="analysis-action ${state.comparisonMode==='view'?'active':''}"><span class="action-symbol">◫</span><span><b>Change analytical view</b><small>Choose another analytical lens</small></span><span>›</span></button>
     </div>
-    <div class="setting-label"><b>${state.comparisonMode==='comparison'?'Comparison candidates':'Analytical lenses'}</b><span>Choose A or B</span></div>
-    <div class="comparison-options">
-      <button class="mini-chart-card ${selected===0?'selected':''}" data-candidate="0"><span class="letter">A</span>${chartThumb(state.comparisonMode==='view'?'area':'line')}<b>${state.comparisonMode==='view'?'Growth momentum':'Regions'}</b><small>${state.comparisonMode==='view'?'Trend lens':'Current comparison'}</small></button>
-      <button class="mini-chart-card ${selected===1?'selected':''}" data-candidate="1"><span class="letter">B</span>${chartThumb(state.comparisonMode==='view'?'bar':'dot','#18a29a')}<b>${state.comparisonMode==='view'?'Contribution':'Against target'}</b><small>${state.comparisonMode==='view'?'Composition lens':'Alternative comparison'}</small></button>
-    </div>`;
+    <div class="canvas-prompt"><span>✦</span><p>${state.t1Gallery ? "Analysis A and B are ready in the central canvas." : "Choose an action to generate Analysis A and B in the central canvas."}</p></div>`;
 }
 
 function typeIcon(kind) {
@@ -203,22 +234,13 @@ function renderStage() {
   el("stageContent").innerHTML = state.stage === "t1" ? t1Content() : state.stage === "t2" ? t2Content() : state.stage === "t3" ? t3Content() : t4Content();
   el("assistantPrompt").textContent = stages[state.stage].prompt;
   el("suggestionChips").innerHTML = stages[state.stage].chips.map(c=>`<button>${c}</button>`).join('');
-  el("modeIndicator").textContent = state.stage === "t1" ? "ANALYSIS PREVIEW" : state.stage === "t2" ? "ENCODING PREVIEW" : state.stage === "t3" ? "FOCUS VIEW" : "STYLE PREVIEW";
-  el("chartRationale").textContent = state.stage === "t1" ? "The canvas shows only the analysis selected from the candidates on the right." : state.stage === "t2" ? "The selected encoding is applied directly to the current T1 result." : state.stage === "t3" ? "The selected target is emphasized without changing the underlying result." : "Style adjustments update in place and preserve every encoded value.";
+  el("modeIndicator").textContent = state.stage === "t1" ? (state.t1Gallery ? "ANALYSIS A/B" : "ANALYSIS VIEW") : state.stage === "t2" ? "ENCODING PREVIEW" : state.stage === "t3" ? "FOCUS VIEW" : "STYLE PREVIEW";
+  el("chartRationale").textContent = state.stage === "t1" ? (state.t1Gallery ? "Choose one of the two generated analyses to make it the main view." : "Click a T1 action on the right to generate two analyses in the canvas.") : state.stage === "t2" ? "The selected encoding is applied directly to the current T1 result." : state.stage === "t3" ? "The selected target is emphasized without changing the underlying result." : "Style adjustments update in place and preserve every encoded value.";
   bindStageInteractions(); bindSuggestionChips();
 }
 
 function bindStageInteractions() {
-  document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { state.comparisonMode = b.dataset.mode; renderStage(); renderMain(); }));
-  document.querySelectorAll("[data-candidate]").forEach(b => b.addEventListener("click", () => {
-    const choice = Number(b.dataset.candidate);
-    state.t1Selections[state.comparisonMode] = choice;
-    const titles = state.comparisonMode === "view" ? ["Regional growth momentum", "Regional contribution to total"] : ["Regional revenue performance", "Actual revenue against target"];
-    state.title = titles[choice];
-    el("workspaceTitle").textContent = state.title;
-    el("lastChange").textContent = `T1 · ${state.comparisonMode === 'view' ? 'analytical view' : 'comparison'} ${choice ? 'B' : 'A'}`;
-    renderStage(); renderMain();
-  }));
+  document.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { state.comparisonMode = b.dataset.mode; state.t1Gallery = true; renderStage(); renderMain(); }));
   document.querySelectorAll("[data-type]").forEach(b => b.addEventListener("click", () => { state.chartType=b.dataset.type; el("lastChange").textContent=`T2 · ${state.chartType} chart`; renderStage(); renderMain(); }));
   document.querySelector('[data-action="title"]')?.addEventListener("click", openTitleModal);
   document.querySelector('[data-action="focus"]')?.addEventListener("click", () => toast("Focus picker is active", "Click any mark or series label on the chart."));
@@ -257,7 +279,7 @@ function bindSuggestionChips() {
   el("suggestionChips").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ el("chatInput").value=b.textContent; el("chatInput").focus(); }));
 }
 
-document.querySelectorAll(".stage-tab").forEach(b => b.addEventListener("click", () => { state.stage=b.dataset.stage; renderStage(); renderMain(); applyStylePreview(); }));
+document.querySelectorAll(".stage-tab").forEach(b => b.addEventListener("click", () => { state.stage=b.dataset.stage; state.t1Gallery = false; renderStage(); renderMain(); applyStylePreview(); }));
 
 el("perspectiveButton").addEventListener("click", () => { const menu=el("perspectiveMenu"); menu.hidden=!menu.hidden; el("perspectiveButton").setAttribute("aria-expanded", String(!menu.hidden)); });
 el("perspectiveMenu").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{ el("perspectiveName").textContent=b.dataset.name; el("perspectiveDesc").textContent=b.dataset.desc; el("perspectiveMenu").hidden=true; toast("Perspective updated",b.dataset.name); }));
@@ -265,7 +287,7 @@ document.addEventListener("click", e=>{ if(!e.target.closest(".perspective-contr
 el("closeModal").addEventListener("click",()=>el("modalBackdrop").hidden=true);
 el("modalBackdrop").addEventListener("click",e=>{if(e.target===el("modalBackdrop")) el("modalBackdrop").hidden=true;});
 el("acceptButton").addEventListener("click",()=>toast("Recommendation accepted","Your preference has been recorded."));
-el("resetButton").addEventListener("click",()=>{ Object.assign(state,{stage:"t3",focus:"Europe",title:"Regional revenue performance",reference:null,comparisonMode:"comparison",chartType:"line",t1Selections:{comparison:0,view:0}}); el("workspaceTitle").textContent=state.title; renderStage(); renderMain(); applyStylePreview(); toast("View reset","The initial recommendation has been restored."); });
+el("resetButton").addEventListener("click",()=>{ Object.assign(state,{stage:"t3",focus:"Europe",title:"Regional revenue performance",reference:null,comparisonMode:"comparison",chartType:"line",t1Gallery:false,t1Selections:{comparison:0,view:0}}); el("workspaceTitle").textContent=state.title; renderStage(); renderMain(); applyStylePreview(); toast("View reset","The initial recommendation has been restored."); });
 el("whyButton").addEventListener("click",()=>{ el("chatInput").value="Why is this chart recommended?"; el("chatInput").focus(); });
 el("chatForm").addEventListener("submit", e=>{ e.preventDefault(); const input=el("chatInput"); if(!input.value.trim())return; const msg=document.createElement("div"); msg.className="user-message"; msg.textContent=input.value.trim(); el("chatMessages").appendChild(msg); input.value=""; setTimeout(()=>{ const reply=document.createElement("div"); reply.className="assistant-message"; reply.innerHTML=`<span>✦</span><p>I’ve mapped that request to <b>${state.stage.toUpperCase()}</b>. This prototype records the intent without changing the underlying data.</p>`; el("chatMessages").appendChild(reply); el("chatMessages").scrollTop=el("chatMessages").scrollHeight; },350); });
 
